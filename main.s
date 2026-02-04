@@ -10,9 +10,7 @@
 .LC3:
 	.string	"event read failed"
 .LC4:
-	.string	"not keyboard event"
-.LC5:
-	.string	"%d\n"
+	.string	"%ld.%06ld\n-----  %d %d %d\n"
 	.text
 	.globl	main
 	.type	main, @function
@@ -60,7 +58,7 @@ main:
 	movq	%rdx, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-.L6:
+.L5:
 	leaq	-32(%rbp), %rcx
 	movl	-40(%rbp), %eax
 	movl	$24, %edx
@@ -78,21 +76,21 @@ main:
 .L3:
 	movzwl	-16(%rbp), %eax
 	cmpw	$1, %ax
-	je	.L4
-	leaq	.LC4(%rip), %rax
-	movq	%rax, %rdi
-	call	puts@PLT
-	jmp	.L5
-.L4:
+	jne	.L5
+	movl	-12(%rbp), %r8d
 	movzwl	-14(%rbp), %eax
-	movzwl	%ax, %eax
-	leaq	.LC5(%rip), %rdx
-	movl	%eax, %esi
-	movq	%rdx, %rdi
+	movzwl	%ax, %esi
+	movzwl	-16(%rbp), %eax
+	movzwl	%ax, %ecx
+	movq	-24(%rbp), %rdx
+	movq	-32(%rbp), %rax
+	leaq	.LC4(%rip), %rdi
+	movl	%r8d, %r9d
+	movl	%esi, %r8d
+	movq	%rax, %rsi
 	movl	$0, %eax
 	call	printf@PLT
-.L5:
-	jmp	.L6
+	jmp	.L5
 	.cfi_endproc
 .LFE6:
 	.size	main, .-main
