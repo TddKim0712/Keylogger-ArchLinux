@@ -30,12 +30,25 @@ int main(int argc, char* argv[]){
         if (n < 0 || sizeof(ev)< 1) {
             printf("event read failed\n");
             exit(-2);
-        } 
+        }
+       /*	
         if (ev.type != EV_KEY){
             printf("not keyboard event\n");
             continue;
         }
-        printf("%d\n", ev.code);
+	*/
+	// keyboard push -> not only EV_KEY but also others
+        // if you print ev types to watch like below:
+	//	printf("%d %d\n",ev.type, ev.code);
+	// 4 4 \n 1 code \n 0 0 will be printed
+	// 4: EV_MSC (real physicall data i guess)
+	// 1: EV_KEY (what i really want)
+	// 0: EV_SYN (this is the end)
+	
+	if (ev.type == EV_KEY) {
+		printf("%ld.%06ld\n-----  %d %d %d\n"
+				,ev.time.tv_sec, ev.time.tv_usec, ev.type, ev.code, ev.value);
+	}
 
 
     }
