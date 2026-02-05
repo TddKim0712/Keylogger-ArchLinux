@@ -3,6 +3,57 @@
 #include <linux/input.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <ioctl.h>
+
+
+// Find which /dev/input/eventX corresponds to a keyboard
+char* key_event_location() {
+    // Static buffer so the returned pointer remains valid
+    static char path[256];
+
+    // Base directory for input devices
+    const char* linux_event_location = "/dev/input/";
+
+    // event0 ~ event99
+    for (int X = 0; X < 100; X++) {
+
+        // assemble full path: "/dev/input/eventX"
+        snprintf(path, sizeof(path),
+                 "%sevent%d", linux_event_location, X);
+
+        // Open the event device
+        int fd = open(path, O_RDONLY);
+        if (fd < 0)
+            continue;   // eventX does not exist or cannot be opened
+
+        // Bitmask array for supported event types
+        unsigned long evbit[(EV_MAX + 7) / 8] = {0};
+
+        // Ask the kernel which event types this device supports
+        if (ioctl(fd, EVIOCGBIT(0, sizeof(evbit)), evbit) < 0) { // minus val is error
+            close(fd);
+            continue;
+        }
+
+        // Check if EV_KEY (key events) is supported
+        // EV_KEY / 8  -> byte index
+        // EV_KEY % 8  -> bit index inside that byte
+        if (evbit[EV_KEY / 8] & (1 << (EV_KEY % 8))) {
+            printf("%s supports EV_KEY\n", path);
+
+            close(fd);
+            return path;   // Keyboard supported event found
+        }
+
+        close(fd);
+    }
+
+    // No keyboard event device found
+    printf("not found\n");
+    return NULL;
+}
+
+
 
 int main(int argc, char* argv[]){
 
