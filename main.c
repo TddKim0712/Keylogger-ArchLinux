@@ -6,6 +6,25 @@
 #include <sys/ioctl.h>
 #include <sys/select.h>
 
+//unsigned long --> how many bits (don't care 32bit sys  or  64bit sys)
+#define BITS_PER_LONG (sizeof(unsigned long) * 8)
+
+//to clarify how many "unsigned long"s are needed to express x number of bits
+// for example: keybit of KEY_MAX is 767, in 64 bit sys 769 bits = 64 * 12 + 1
+// so it needs 13 unsigned long array 
+#define NBITS(x) ((((x) - 1) / BITS_PER_LONG) + 1)
+
+//keybits arrays are divided by 32bits or 64bits(BITS PER LONG) 
+// for example: keybits[0] -> bit 0~63, [1] -> bit 64~127...
+// OFF macro shows where the keybit is located by using modular 
+#define OFF(x)  (x % BITS_PER_LONG)
+
+//bit masking, making the "x"th bit 1
+// used for masking comparison
+// should use OFF macro  (array number is excluded)
+// for example: BITMASK(130) --> actual keybit number is 2 -->, 00000001 << 2 , --> 00000100
+// this shifted mask is used to comparison if the keybit number is legit.
+#define BITMASK(x)  (1U << OFF(x))
 
 // Find which /dev/input/eventX corresponds to a keyboard
 char* key_event_location() {
@@ -22,8 +41,9 @@ char* key_event_location() {
         snprintf(path, sizeof(path),
                  "%sevent%d", linux_event_location, X);
 
+	
         // Open the event device
-        int fd = open(path, O_RDONLY);
+        int fd = open(path, O_RDONLY | O_NONBLOCK);
         if (fd < 0)
             continue;   // eventX does not exist or cannot be opened
 
@@ -35,6 +55,7 @@ char* key_event_location() {
             close(fd);
             continue;
         }
+
 
         // Check if EV_KEY (key events) is supported
         // EV_KEY / 8  -> byte index
@@ -137,8 +158,8 @@ int main(int argc, char* argv[]){
        // n is returned value of read
        
         if (n > 0 && ev.type == EV_KEY) {
-		printf("%ld.%06ld\n-----  %d %d %d\n"
-				,ev.time.tv_sec, ev.time.tv_usec, ev.type, ev.code, ev.value);
+		printf("\ntime= %ld.%06ld\n-------- type=%d | code=%d | value=%d\n"
+				,(long)ev.time.tv_sec, (long)ev.time.tv_usec, ev.type, ev.code, ev.value);
 	    }
     }
 
