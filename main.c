@@ -24,7 +24,7 @@
 // should use OFF macro  (array number is excluded)
 // for example: BITMASK(130) --> actual keybit number is 2 -->, 00000001 << 2 , --> 00000100
 // this shifted mask is used to comparison if the keybit number is legit.
-#define BITMASK(x)  (1U << OFF(x))
+#define BITMASK(x)  (1UL << OFF(x))
 
 // Find which /dev/input/eventX corresponds to a keyboard
 char* key_event_location() {
@@ -75,7 +75,19 @@ char* key_event_location() {
     return NULL;
 }
 
+int is_keyboard_event(int fd) {
+    
+    const int real_kb[] = {KEY_A, KEY_B, KEY_C, KEY_Z, KEY_1, KEY_SPACE};
+    if (fd < 0) { return 0;} // invalid fd
+    else if {
+        // ioctl check
+        if (ioctl(fd, EVIOCGBIT))
+        // check if the device supports EV_KEY
 
+        // check if the device supports specific keys (like KEY_A, KEY_B, etc.)
+       }
+
+}
 
 int main(int argc, char* argv[]){
 
